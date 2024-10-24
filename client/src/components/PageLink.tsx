@@ -29,8 +29,8 @@ export function PageLink(
         className={`h-8 leading-8 text-left pl-8 w-full mb-[1px] hover:bg-white ${
           (currentPage == page.id) ? "bg-white" : "bg-gray-200"
         }`}
-        onClick={async () => {
-          await handleClick(page.id, currentPage);
+        onClick={() => {
+          handleClick(page.id);
         }}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -71,7 +71,6 @@ export function PageLink(
             className="py-1"
             onClick={async () => {
               setShowModal(false);
-              console.log(page.id);
               await manipulateFiles("001", "", page.id);
             }}
           >

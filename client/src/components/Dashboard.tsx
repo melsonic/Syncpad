@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorState } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { EditorView, keymap, ViewUpdate } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
 import {
@@ -14,6 +14,7 @@ import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
 import {
   deletePage,
+  fetchCurrentPageContent,
   fetchPages,
   performBulkSave,
   savePage,
@@ -22,8 +23,9 @@ import {
 
 export function Dashboard() {
   const [user, setUser] = useAtom(userLoggedInAtom);
-  const [editor, setEditor] = useState<EditorView | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(0);
+  const editor = useRef<EditorView | null>(null);
+  const currentPageContent = useRef<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(-1);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const [pages, setPages] = useState<Page[]>([]);
@@ -34,28 +36,26 @@ export function Dashboard() {
     setPages(
       [...pages, new Page(data["page_id"], data["title"], data["content"])],
     );
+    setCurrentPage(data["page_id"]);
   }
 
   function updateCurrentPageContent(currentPageId: number) {
     setPages(pages.map((page) => {
-      if (page.id == currentPageId) {
-        page.content = editor?.state.doc.toString() || "";
-        console.log(currentPageId, " ", page.content);
+      if (page.id === currentPageId) {
+        page.content = currentPageContent.current;
       }
       return page;
     }));
+    console.log(pages);
   }
 
-  async function handlePageLinkClick(
+  function handlePageLinkClick(
     clickedPageId: number,
-    currentPageId: number,
   ) {
-    if (clickedPageId === currentPageId) return;
-    updateCurrentPageContent(currentPageId);
-    console.log(currentPageId, " -> ", clickedPageId);
+    if (clickedPageId === currentPage) return;
+    updateCurrentPageContent(currentPage);
     setCurrentPage(clickedPageId);
-    /// TODO: if returns false, show in the UI
-    // await updatePageContent(accessToken, clickedPageId, contentToUpdate);
+    currentPageContent.current = fetchCurrentPageContent(pages, clickedPageId);
   }
 
   async function manipulatePages(
@@ -88,10 +88,15 @@ export function Dashboard() {
     }
   }
 
-  async function autoSavePages() {
+  async function autoSavePages(): Promise<boolean> {
     updateCurrentPageContent(currentPage);
-    const response = await performBulkSave(accessToken, pages);
-    console.log(response);
+    const success = await performBulkSave(accessToken, pages);
+    if(success) {
+      console.log("pages saved successfully!!!")
+    } else {
+      console.log("pages not saved correctly!!!")
+    }
+    return success;
   }
 
   useEffect(() => {
@@ -106,19 +111,11 @@ export function Dashboard() {
     async function fetchPagesUtil() {
       const fetchedPages: Page[] = await fetchPages(accessToken);
       setPages(fetchedPages);
+      if (fetchedPages.length > 0) {
+        setCurrentPage(fetchedPages[0].id);
+      }
     }
     fetchPagesUtil();
-    if (pages.length > 0) {
-      setCurrentPage(pages[0].id);
-    }
-    const setIntervalId = setInterval(async () => {
-      console.log("inside interval : ", currentPage);
-      await autoSavePages();
-    }, 30000);
-
-    return () => {
-      clearInterval(setIntervalId);
-    };
   }, [accessToken]);
 
   useEffect(() => {
@@ -134,24 +131,41 @@ export function Dashboard() {
       syntaxHighlighting(defaultHighlightStyle),
       keymap.of([...defaultKeymap, ...markdownKeymap, ...historyKeymap]),
       EditorView.lineWrapping,
+      EditorView.updateListener.of((v: ViewUpdate) => {
+        if (v.docChanged) {
+          currentPageContent.current = v.state.doc.toString();
+        }
+      }),
     ];
 
     let startState = EditorState.create({
       extensions: extensions,
-      doc: pages.filter((page) => page.id == currentPage)[0]?.content,
+      doc: "Welcome to Syncpad!!!",
     });
+
     let view = new EditorView({
       state: startState,
       parent: editorElement,
     });
 
-    setEditor(view);
+    editor.current = view;
+
+    window.addEventListener("")
 
     return () => {
       view.destroy();
-      setEditor(null);
     };
-  }, [user, currentPage]);
+  }, []);
+
+  useEffect(() => {
+    editor.current?.dispatch({
+      changes: {
+        from: 0,
+        to: editor.current?.state.doc.length,
+        insert: fetchCurrentPageContent(pages, currentPage),
+      },
+    });
+  }, [currentPage]);
 
   return (
     <div className="w-screen h-screen flex">

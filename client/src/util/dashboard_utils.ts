@@ -19,7 +19,6 @@ async function fetchPages(accessToken: string | null): Promise<Array<Page>> {
     return [];
   }
   const data = await response.json();
-  console.log(data);
   let fetchedPages: Page[] = [];
   for (let fetchedPage of data["pages"]) {
     fetchedPages.push(
@@ -79,7 +78,6 @@ async function updatePageContent(
   if (!response.ok) {
     return false;
   }
-  console.log(response);
   return true;
 }
 
@@ -101,7 +99,6 @@ async function deletePage(
       }),
     },
   );
-  console.log(response);
   if (!response.ok) {
     // return @message "Error deleting page"
     return false;
@@ -151,16 +148,24 @@ async function bulkSavePages(
 async function performBulkSave(
   accessToken: string | null,
   pages: Page[],
-): Promise<string> {
+): Promise<boolean> {
   if (accessToken === null) return "access token is null";
   const success: boolean = await bulkSavePages(accessToken, pages);
-  return success
-    ? "pages updated successfully!!!"
-    : "some pages not saved properly :(";
+  return success;
+}
+
+function fetchCurrentPageContent(pages: Page[], pageId: number): string {
+  let content: string = pages.filter((page) => {
+    if (page.id === pageId) {
+      return page.content;
+    }
+  })[0]?.content || "";
+  return content;
 }
 
 export {
   deletePage,
+  fetchCurrentPageContent,
   fetchPages,
   performBulkSave,
   savePage,
