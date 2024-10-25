@@ -111,6 +111,22 @@ func UserLoginController(conn *pgx.Conn) http.HandlerFunc {
 	}
 }
 
+func UserAuthorize(conn *pgx.Conn) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		responseContent := map[string]any{
+			"message": "user authorized!!!",
+		}
+		jsonData, jsonMarshalError := json.Marshal(responseContent)
+		if utilErrorReturn(jsonMarshalError, &w, http.StatusInternalServerError, "Internal server error") {
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Add("Content-Type", "application/json")
+		w.Write(jsonData)
+		return
+	}
+}
+
 func UserDeleteController(conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.Context().Value("username").(string)

@@ -3,10 +3,12 @@ import * as constants from "../constants.ts";
 import { AuthResponse } from "../types/user.tsx";
 import { Link, useNavigate } from "react-router-dom";
 import { userLoggedInAtom } from "../atoms/user.ts";
-import { useAtom } from "jotai";
+import { accessTokenAtom } from "../atoms/accessToken.ts";
+import { useAtom, useSetAtom } from "jotai";
 
 export function Login() {
   const [user, setUser] = useAtom(userLoggedInAtom);
+  const setAccessToken = useSetAtom(accessTokenAtom);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<Error | null>(null);
@@ -40,6 +42,7 @@ export function Login() {
       const data: AuthResponse = await response.json();
       console.log(data["access-token"]);
       window.localStorage.setItem("access-token", data["access-token"]);
+      setAccessToken(data["access-token"]);
       setError(null);
       setUser(true);
     } catch (error: unknown) {

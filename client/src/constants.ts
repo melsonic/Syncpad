@@ -4,6 +4,7 @@ export const SERVER_ADDRESS: string = "http://localhost:5001";
 // user routes
 export const USER_CREATE: string = "/user/create";
 export const USER_LOGIN: string = "/user/login";
+export const USER_AUTHORIZE: string = "/user/authorize";
 export const USER_USERNAME_UPDATE: string = "/user/update/username";
 export const USER_PASSWORD_UPDATE: string = "/user/update/password";
 export const GET_USER_PAGES: string = "/user/pages";

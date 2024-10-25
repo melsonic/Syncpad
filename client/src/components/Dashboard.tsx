@@ -10,7 +10,8 @@ import {
 import { Page } from "../types/page.tsx";
 import { PageLink } from "./PageLink.tsx";
 import { userLoggedInAtom } from "../atoms/user.ts";
-import { useAtom } from "jotai";
+import { accessTokenAtom } from "../atoms/accessToken.ts";
+import { useAtom, useAtomValue } from "jotai";
 import { useNavigate } from "react-router-dom";
 import {
   deletePage,
@@ -23,11 +24,11 @@ import {
 
 export function Dashboard() {
   const [user, setUser] = useAtom(userLoggedInAtom);
+  const accessToken = useAtomValue(accessTokenAtom);
   const editor = useRef<EditorView | null>(null);
   const currentPageContent = useRef<string>("");
   const pageRef = useRef<Page[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(-1);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
   async function createNewPage(title: string, content: string) {
@@ -112,8 +113,7 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    setAccessToken(window.localStorage.getItem("access-token"));
-    if (accessToken !== null) {
+    if (accessToken !== "") {
       setUser(true);
     }
     if (!user) {
@@ -121,10 +121,14 @@ export function Dashboard() {
       return;
     }
     async function fetchPagesUtil() {
-      const fetchedPages: Page[] = await fetchPages(accessToken);
-      pageRef.current = [...fetchedPages];
-      if (fetchedPages.length > 0) {
-        setCurrentPage(fetchedPages[0].id);
+      const fetchedPagesData = await fetchPages(accessToken);
+      if (!fetchedPagesData.success) {
+        navigate("/");
+        return;
+      }
+      pageRef.current = [...fetchedPagesData.pages];
+      if (fetchedPagesData.pages.length > 0) {
+        setCurrentPage(fetchedPagesData.pages[0].id);
       }
     }
     fetchPagesUtil();

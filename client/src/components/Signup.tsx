@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import * as constants from "../constants.ts";
 import { AuthResponse } from "../types/user.tsx";
 import { Link } from "react-router-dom";
-import { useAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { userLoggedInAtom } from "../atoms/user.ts";
 import { useNavigate } from "react-router-dom";
+import { accessTokenAtom } from "../atoms/accessToken.ts";
 
 export function SignUp() {
   const [user, setUser] = useAtom(userLoggedInAtom);
+  const setAccessToken = useSetAtom(accessTokenAtom);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -20,7 +22,7 @@ export function SignUp() {
       setError(new Error("Please enter both username and password"));
       return;
     }
-    console.log("Login attempted with:", { username, password });
+    console.log("Sign Up attempted with:", { username, password });
     try {
       const response: Response = await fetch(
         `${constants.SERVER_ADDRESS}${constants.USER_CREATE}`,
@@ -43,6 +45,7 @@ export function SignUp() {
         return;
       }
       window.localStorage.setItem("access-token", data["access-token"]);
+      setAccessToken(data["access-token"]);
       setError(null);
       setUser(true);
     } catch (error: unknown) {

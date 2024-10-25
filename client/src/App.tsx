@@ -1,19 +1,39 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { userLoggedInAtom } from "./atoms/user.ts";
-import { useAtomValue } from "jotai";
+import { accessTokenAtom } from "./atoms/accessToken.ts";
+import { useAtom } from "jotai";
 import { useNavigate } from "react-router-dom";
+import { SERVER_ADDRESS, USER_AUTHORIZE } from "./constants.ts";
 
 export default function App() {
-  const user = useAtomValue(userLoggedInAtom);
+  const [user, setUser] = useAtom(userLoggedInAtom);
+  const [accessToken, setAccessToken] = useAtom(accessTokenAtom);
 
   const navigate = useNavigate();
   useEffect(() => {
+    if (accessToken == "") {
+      setAccessToken(window.localStorage.getItem("access-token") || "");
+    }
+    async function isAuthorize() {
+      const accessTokenWithBearer = `Bearer ${accessToken}`;
+      const response = await fetch(`${SERVER_ADDRESS}${USER_AUTHORIZE}`, {
+        method: "GET",
+        headers: {
+          "Authorization": accessTokenWithBearer,
+        },
+      });
+      if (!response.ok) {
+        setUser(false);
+      }
+      setUser(true);
+    }
+    isAuthorize();
     if (user) {
       navigate("/dashboard");
       return;
     }
-  }, [window, user]);
+  }, [window, user, accessToken]);
   return (
     <div className="bg-gray-100 text-gray-900 h-screen flex flex-col">
       <header className="bg-white shadow">

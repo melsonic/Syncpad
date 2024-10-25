@@ -2,8 +2,10 @@ import * as constants from "../constants";
 import { Page } from "../types/page";
 
 // function to fetch pages
-async function fetchPages(accessToken: string | null): Promise<Array<Page>> {
-  if (accessToken === null) return [];
+async function fetchPages(
+  accessToken: string | null,
+): Promise<{ pages: Array<Page>; success: boolean }> {
+  if (accessToken === null) return { pages: [], success: false };
   const accessTokenWithBearer: string = `Bearer ${accessToken}`;
   const response: Response = await fetch(
     `${constants.SERVER_ADDRESS}${constants.GET_USER_PAGES}`,
@@ -16,7 +18,7 @@ async function fetchPages(accessToken: string | null): Promise<Array<Page>> {
   );
   if (!response.ok) {
     console.log("error fetching pages");
-    return [];
+    return { pages: [], success: false };
   }
   const data = await response.json();
   let fetchedPages: Page[] = [];
@@ -25,7 +27,7 @@ async function fetchPages(accessToken: string | null): Promise<Array<Page>> {
       new Page(fetchedPage.page_id, fetchedPage.title, fetchedPage.content),
     );
   }
-  return fetchedPages;
+  return { pages: fetchedPages, success: true };
 }
 
 async function savePage(
@@ -150,7 +152,10 @@ async function performBulkSave(
   accessToken: string | null,
   pages: Page[],
 ): Promise<boolean> {
-  if (accessToken === null) return false;
+  if (accessToken === null) {
+    console.log("access token is null");
+    return false;
+  }
   const success: boolean = await bulkSavePages(accessToken, pages);
   return success;
 }

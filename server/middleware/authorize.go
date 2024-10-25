@@ -15,7 +15,8 @@ func AuthorizeUser(next http.HandlerFunc, conn *pgx.Conn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		/// Bearer <access-token>
 		authorizeHeader := r.Header.Get("Authorization")
-		if authorizeHeader == "" {
+		if authorizeHeader == "" || len(authorizeHeader) < 8 {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		accessToken := authorizeHeader[7:]
