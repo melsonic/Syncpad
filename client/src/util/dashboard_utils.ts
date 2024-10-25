@@ -139,6 +139,7 @@ async function bulkSavePages(
 ): Promise<boolean> {
   let response: boolean = true;
   for (let page of pages) {
+    console.log(page.id, " => ", page.content);
     const success = await updatePageContent(accessToken, page.id, page.content);
     response = response && success;
   }
@@ -149,7 +150,7 @@ async function performBulkSave(
   accessToken: string | null,
   pages: Page[],
 ): Promise<boolean> {
-  if (accessToken === null) return "access token is null";
+  if (accessToken === null) return false;
   const success: boolean = await bulkSavePages(accessToken, pages);
   return success;
 }

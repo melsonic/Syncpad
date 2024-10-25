@@ -25,28 +25,28 @@ export function Dashboard() {
   const [user, setUser] = useAtom(userLoggedInAtom);
   const editor = useRef<EditorView | null>(null);
   const currentPageContent = useRef<string>("");
+  const pageRef = useRef<Page[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(-1);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const navigate = useNavigate();
-  const [pages, setPages] = useState<Page[]>([]);
 
   async function createNewPage(title: string, content: string) {
     const data: any = await savePage(accessToken, title, content);
     if (data === null) return;
-    setPages(
-      [...pages, new Page(data["page_id"], data["title"], data["content"])],
-    );
+    pageRef.current = [
+      ...pageRef.current,
+      new Page(data["page_id"], data["title"], data["content"]),
+    ];
     setCurrentPage(data["page_id"]);
   }
 
   function updateCurrentPageContent(currentPageId: number) {
-    setPages(pages.map((page) => {
+    pageRef.current = pageRef.current.map((page) => {
       if (page.id === currentPageId) {
         page.content = currentPageContent.current;
       }
       return page;
-    }));
-    console.log(pages);
+    });
   }
 
   function handlePageLinkClick(
@@ -55,7 +55,10 @@ export function Dashboard() {
     if (clickedPageId === currentPage) return;
     updateCurrentPageContent(currentPage);
     setCurrentPage(clickedPageId);
-    currentPageContent.current = fetchCurrentPageContent(pages, clickedPageId);
+    currentPageContent.current = fetchCurrentPageContent(
+      pageRef.current,
+      clickedPageId,
+    );
   }
 
   async function manipulatePages(
@@ -65,12 +68,14 @@ export function Dashboard() {
   ) {
     if (flags === "010") { // duplicate file
       if (pageName === "") return;
-      const pageContent = pages.filter((page) => page.id == pageId)[0].content;
+      const pageContent = pageRef.current.filter((page) =>
+        page.id == pageId
+      )[0].content;
       await createNewPage(pageName, pageContent);
     } else if (flags === "001") { // delete file
       const done: boolean = await deletePage(accessToken, pageId);
       if (!done) return;
-      setPages(pages.filter((page) => page.id != pageId));
+      pageRef.current = pageRef.current.filter((page) => page.id != pageId);
     } else if (flags === "100") { // rename file
       if (pageName === "") return;
       const done: boolean = await updatePageTitle(
@@ -79,22 +84,29 @@ export function Dashboard() {
         pageName,
       );
       if (!done) return;
-      setPages(pages.map((page) => {
+      pageRef.current = pageRef.current.map((page) => {
         if (page.id === pageId) {
           page.title = pageName;
         }
         return page;
-      }));
+      });
     }
+  }
+
+  async function beforeUnloadHandler(e: Event) {
+    e.preventDefault();
+    const success = await autoSavePages();
+    console.log(success);
+    return "";
   }
 
   async function autoSavePages(): Promise<boolean> {
     updateCurrentPageContent(currentPage);
-    const success = await performBulkSave(accessToken, pages);
-    if(success) {
-      console.log("pages saved successfully!!!")
+    const success = await performBulkSave(accessToken, pageRef.current);
+    if (success) {
+      console.log("pages saved successfully!!!");
     } else {
-      console.log("pages not saved correctly!!!")
+      console.log("pages not saved correctly!!!");
     }
     return success;
   }
@@ -110,7 +122,7 @@ export function Dashboard() {
     }
     async function fetchPagesUtil() {
       const fetchedPages: Page[] = await fetchPages(accessToken);
-      setPages(fetchedPages);
+      pageRef.current = [...fetchedPages];
       if (fetchedPages.length > 0) {
         setCurrentPage(fetchedPages[0].id);
       }
@@ -150,10 +162,11 @@ export function Dashboard() {
 
     editor.current = view;
 
-    window.addEventListener("")
+    window.addEventListener("beforeunload", beforeUnloadHandler);
 
     return () => {
       view.destroy();
+      window.removeEventListener("beforeunload", beforeUnloadHandler);
     };
   }, []);
 
@@ -162,7 +175,7 @@ export function Dashboard() {
       changes: {
         from: 0,
         to: editor.current?.state.doc.length,
-        insert: fetchCurrentPageContent(pages, currentPage),
+        insert: fetchCurrentPageContent(pageRef.current, currentPage),
       },
     });
   }, [currentPage]);
@@ -179,7 +192,7 @@ export function Dashboard() {
             +
           </span>
         </div>
-        {pages.map((page) => (
+        {pageRef.current.map((page) => (
           <PageLink
             key={page.id}
             page={page}
