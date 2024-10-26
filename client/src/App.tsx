@@ -12,6 +12,10 @@ export default function App() {
 
   const navigate = useNavigate();
   useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+      return;
+    }
     if (accessToken == "") {
       setAccessToken(window.localStorage.getItem("access-token") || "");
     }
@@ -23,17 +27,15 @@ export default function App() {
           "Authorization": accessTokenWithBearer,
         },
       });
-      if (!response.ok) {
-        setUser(false);
+      if (response.status === 200) {
+        setUser(true);
+        navigate("/dashboard");
+        return;
       }
-      setUser(true);
     }
     isAuthorize();
-    if (user) {
-      navigate("/dashboard");
-      return;
-    }
-  }, [window, user, accessToken]);
+  }, [accessToken]);
+
   return (
     <div className="bg-gray-100 text-gray-900 h-screen flex flex-col">
       <header className="bg-white shadow">

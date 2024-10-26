@@ -113,9 +113,6 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    if (accessToken !== "") {
-      setUser(true);
-    }
     if (!user) {
       navigate("/");
       return;
@@ -123,6 +120,7 @@ export function Dashboard() {
     async function fetchPagesUtil() {
       const fetchedPagesData = await fetchPages(accessToken);
       if (!fetchedPagesData.success) {
+        setUser(false);
         navigate("/");
         return;
       }
@@ -132,7 +130,7 @@ export function Dashboard() {
       }
     }
     fetchPagesUtil();
-  }, [accessToken]);
+  }, []);
 
   useEffect(() => {
     const editorElement: HTMLElement | null = document.getElementById(
