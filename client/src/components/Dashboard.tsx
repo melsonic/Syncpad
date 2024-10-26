@@ -28,6 +28,7 @@ export function Dashboard() {
   const editor = useRef<EditorView | null>(null);
   const currentPageContent = useRef<string>("");
   const pageRef = useRef<Page[]>([]);
+  const currentPageRef = useRef<number>(-1);
   const [currentPage, setCurrentPage] = useState<number>(-1);
   const navigate = useNavigate();
 
@@ -60,6 +61,7 @@ export function Dashboard() {
       pageRef.current,
       clickedPageId,
     );
+    currentPageRef.current = clickedPageId;
   }
 
   async function manipulatePages(
@@ -102,7 +104,7 @@ export function Dashboard() {
   }
 
   async function autoSavePages(): Promise<boolean> {
-    updateCurrentPageContent(currentPage);
+    updateCurrentPageContent(currentPageRef.current);
     const success = await performBulkSave(accessToken, pageRef.current);
     if (success) {
       console.log("pages saved successfully!!!");

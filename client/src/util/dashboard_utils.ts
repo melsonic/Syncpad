@@ -129,7 +129,6 @@ async function updatePageTitle(
     },
   );
   if (!response.ok) {
-    // return @message "Error updating title";
     return false;
   }
   return true;
@@ -141,7 +140,6 @@ async function bulkSavePages(
 ): Promise<boolean> {
   let response: boolean = true;
   for (let page of pages) {
-    console.log(page.id, " => ", page.content);
     const success = await updatePageContent(accessToken, page.id, page.content);
     response = response && success;
   }

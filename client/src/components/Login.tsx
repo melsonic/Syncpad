@@ -40,7 +40,6 @@ export function Login() {
         return;
       }
       const data: AuthResponse = await response.json();
-      console.log(data["access-token"]);
       window.localStorage.setItem("access-token", data["access-token"]);
       setAccessToken(data["access-token"]);
       setError(null);
