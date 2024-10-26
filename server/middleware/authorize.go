@@ -27,18 +27,18 @@ func AuthorizeUser(next http.HandlerFunc, conn *pgx.Conn) http.HandlerFunc {
 			}
 			return []byte(os.Getenv("JWT_SIGNARUTE")), nil
 		})
-		if utilErrorReturn(jwtParseError, &w, http.StatusNonAuthoritativeInfo, "Error parsing the JWT Token") {
+		if utilErrorReturn(jwtParseError, &w, http.StatusUnauthorized, "Error parsing the JWT Token") {
 			return
 		}
 		claims, isClaimFetched := jwtToken.Claims.(jwt.MapClaims)
-		if utilBoolReturn(isClaimFetched, &w, http.StatusNonAuthoritativeInfo, "Error fetching JWT Token claims") {
+		if utilBoolReturn(isClaimFetched, &w, http.StatusUnauthorized, "Error fetching JWT Token claims") {
 			return
 		}
 		expDateTime, expireTimeError := claims.GetExpirationTime()
 		if expireTimeError == nil && expDateTime.Compare(time.Now()) == -1 {
 			expireTimeError = fmt.Errorf("jwt token expired")
 		}
-		if utilErrorReturn(expireTimeError, &w, http.StatusNonAuthoritativeInfo, "JWT Token expired") {
+		if utilErrorReturn(expireTimeError, &w, http.StatusUnauthorized, "JWT Token expired") {
 			return
 		}
 		username, isUsernameFetched := claims["username"].(string)

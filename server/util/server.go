@@ -23,7 +23,7 @@ func SetupServeMux(conn *pgx.Conn) *http.ServeMux {
 	/// user login
 	router.HandleFunc("/user/login", controller.UserLoginController(conn))
 	/// user Authorize
-	router.HandleFunc("/user/authorize", controller.UserAuthorize(conn))
+	router.HandleFunc("/user/authorize", middleware.AuthorizeUser(controller.UserAuthorize(conn), conn))
 	/// user delete
 	router.HandleFunc("/user/delete", middleware.AuthorizeUser(controller.UserDeleteController(conn), conn))
 	/// username update
