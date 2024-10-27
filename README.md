@@ -16,6 +16,7 @@ Welcome to Syncpad, a simple note taking app.
 - React
 - React Router
 - Tailwind CSS
+- CodeMirror 6.0
 
 **BackEnd**
 - Golang (net/http)
