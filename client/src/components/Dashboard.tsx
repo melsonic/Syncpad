@@ -184,6 +184,13 @@ export function Dashboard() {
     });
   }, [currentPage]);
 
+  useEffect(() => {
+    let loopId = setInterval(autoSavePages, 10000);
+    return () => {
+      clearInterval(loopId);
+    }
+  }, [])
+
   return (
     <div className="w-screen h-screen flex">
       <div className="w-96 bg-gray-100">
